@@ -1053,7 +1053,7 @@
     </div>
 
     <script>
-        // --- 0. FAIL-SAFE ---
+        // --- 0. FAIL-SAFE (Intro Overlay) ---
         setTimeout(() => {
             const overlay = document.getElementById('intro-overlay');
             if (overlay && overlay.style.display !== 'none') {
@@ -1071,438 +1071,277 @@
         const modal = document.getElementById('modal');
 
         let isModalOpen = false;
-        let mouseX = window.innerWidth / 2;
-        let mouseY = window.innerHeight / 2;
-
-        // Deteksi Mobile vs Desktop untuk performa
-        let isMobile = window.innerWidth < 768;
-        let scaleFactor = 1; // Untuk mengatur ukuran elemen berdasarkan layar
-
-        // --- SCROLLBAR LOGIC ---
-        function updateCustomScroll() {
-            const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-            let progress = window.scrollY / totalHeight;
-            if (totalHeight <= 0) progress = 0;
-            const trackHeight = window.innerHeight - 100;
-            const thumbPosition = progress * trackHeight;
-
-            customThumb.style.transform = `translateY(${thumbPosition}px)`;
-            scrollFloat.style.transform = `translateY(${thumbPosition + 40}px)`;
-            scrollFloat.innerText = `${Math.min(100, Math.max(0, Math.round(progress * 100)))}%`;
-        }
-        window.addEventListener('scroll', () => { updateCustomScroll(); checkSection(); });
-
-        // --- CANVAS SYSTEM ---
         let width, height;
-        let currentSection = 'hero';
-        let targetSection = 'hero';
-        let transitionProgress = 0;
-        let isTransitioning = false;
+        let mx = 0, my = 0; // Mouse smooth coordinates
+        let targetMx = 0, targetMy = 0;
 
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-            isMobile = width < 768;
-            // Scale factor: 1 di layar 1920px, lebih kecil di HP
-            scaleFactor = Math.min(width, height) / 900;
+        let scaleFactor = 1;
 
-            // Re-init concepts with new dimensions
-            initLandscape();
-            initOrbit();
-            initNodes();
-            initWarp();
-            updateCustomScroll();
-        }
-        window.addEventListener('resize', resize);
+        // Deteksi Mobile
+        let isMobile = window.innerWidth < 768;
+        let numParticles = isMobile ? 300 : 800;
 
-        const sections = document.querySelectorAll('section');
-        function checkSection() {
-            let newSection = currentSection;
-            let maxOverlap = 0;
-            sections.forEach(section => {
-                const rect = section.getBoundingClientRect();
-                const overlap = Math.max(0, Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0));
-                if (overlap > maxOverlap) {
-                    maxOverlap = overlap;
-                    newSection = section.id.replace('section-', '');
-                }
-            });
-            if (newSection !== targetSection) {
-                targetSection = newSection;
-                isTransitioning = true;
-            }
-        }
+        // --- PARTICLE SYSTEM ---
+        const particles = [];
 
-        // =========================================
-        // --- 1. HERO: REACTOR CORE EYE ---
-        // =========================================
-        let ringRotation1 = 0; let ringRotation2 = 0;
+        function initParticles() {
+            particles.length = 0;
+            // Sedikit kurangi jumlah partikel di HP agar performa tetap ngebut meski ukuran besar
+            numParticles = window.innerWidth < 768 ? 180 : 600;
 
-        function drawHero(globalOpacity = 1) {
-            ctx.globalAlpha = globalOpacity;
-            const centerX = width / 2;
-            const centerY = height / 2;
-            // Base radius responsif
-            const coreRadius = 150 * scaleFactor;
-
-            // Logic Scroll (Meredup saat scroll)
-            let scrollPercent = Math.min(1, window.scrollY / 500);
-            if (isTransitioning && currentSection === 'hero' && targetSection === 'architect') scrollPercent = 0;
-
-            const powerLevel = 1 - scrollPercent;
-
-            // Mouse Look
-            const dx = mouseX - centerX; const dy = mouseY - centerY;
-            const angle = Math.atan2(dy, dx);
-            const dist = Math.min(Math.hypot(dx, dy), coreRadius * 0.3);
-            const pupilX = centerX + Math.cos(angle) * dist * powerLevel;
-            const pupilY = centerY + Math.sin(angle) * dist * powerLevel;
-
-            ringRotation1 += 0.02 * powerLevel;
-            ringRotation2 -= 0.01 * powerLevel;
-
-            // Housing (Dark Metal)
-            const housingGrad = ctx.createRadialGradient(centerX, centerY, coreRadius * 0.5, centerX, centerY, coreRadius * 1.2);
-            housingGrad.addColorStop(0, '#1a1a1a'); housingGrad.addColorStop(1, '#000000');
-            ctx.fillStyle = housingGrad; ctx.beginPath(); ctx.arc(centerX, centerY, coreRadius * 1.2, 0, Math.PI * 2); ctx.fill();
-
-            // Glow (Red)
-            if (powerLevel > 0.1) {
-                ctx.shadowBlur = 50 * powerLevel * scaleFactor;
-                ctx.shadowColor = `rgba(235, 77, 75, ${0.5 * powerLevel})`;
-            } else { ctx.shadowBlur = 0; }
-
-            // Tech Rings
-            ctx.strokeStyle = `rgba(255, 255, 255, ${0.2 * powerLevel})`; ctx.lineWidth = 2 * scaleFactor;
-
-            ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(ringRotation1); ctx.setLineDash([10, 30]);
-            ctx.beginPath(); ctx.arc(0, 0, coreRadius * 0.9, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
-
-            ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(ringRotation2); ctx.setLineDash([5, 15]);
-            ctx.beginPath(); ctx.arc(0, 0, coreRadius * 0.7, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
-
-            ctx.setLineDash([]); ctx.shadowBlur = 0;
-
-            // Pupil / Lens
-            const lensRadius = coreRadius * 0.4;
-            const lensGrad = ctx.createRadialGradient(pupilX, pupilY, 0, pupilX, pupilY, lensRadius);
-            lensGrad.addColorStop(0, `rgba(255, 255, 255, ${powerLevel})`);
-            lensGrad.addColorStop(0.3, `rgba(235, 77, 75, ${powerLevel})`);
-            lensGrad.addColorStop(1, `rgba(50, 0, 0, ${powerLevel})`);
-            ctx.fillStyle = lensGrad; ctx.beginPath(); ctx.arc(pupilX, pupilY, lensRadius, 0, Math.PI * 2); ctx.fill();
-
-            // Shutter Blades (Hanya jika tidak sedang transisi ke Architect)
-            if (!isTransitioning || targetSection !== 'architect') {
-                if (scrollPercent > 0) {
-                    ctx.save(); ctx.beginPath(); ctx.arc(centerX, centerY, coreRadius * 1.25, 0, Math.PI * 2); ctx.clip();
-                    for (let i = 0; i < 6; i++) {
-                        const bladeAngle = (Math.PI / 3) * i;
-                        const bDist = (1 - scrollPercent) * (coreRadius * 2.5);
-                        const bx = centerX + Math.cos(bladeAngle) * bDist; const by = centerY + Math.sin(bladeAngle) * bDist;
-                        ctx.fillStyle = '#0a0a0a'; ctx.beginPath(); ctx.moveTo(bx, by);
-                        const bladeLen = 800 * scaleFactor;
-                        ctx.lineTo(bx + Math.cos(bladeAngle + Math.PI / 2) * bladeLen, by + Math.sin(bladeAngle + Math.PI / 2) * bladeLen);
-                        ctx.lineTo(bx + Math.cos(bladeAngle - Math.PI / 2) * bladeLen, by + Math.sin(bladeAngle - Math.PI / 2) * bladeLen);
-                        ctx.fill(); ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.stroke();
-                    }
-                    ctx.restore();
-                }
-            }
-            ctx.globalAlpha = 1;
-        }
-
-        // =========================================================================
-        // --- 2. ARCHITECT: 3D CYBER LANDSCAPE (RESPONSIVE) ---
-        // =========================================================================
-        let landscapePoints = [];
-        let flightSpeed = 0;
-
-        function initLandscape() {
-            landscapePoints = [];
-            // Kurangi kepadatan grid di mobile agar lancar
-            const COLS = isMobile ? 20 : 50;
-            const ROWS = isMobile ? 20 : 40;
-            const SPACING = isMobile ? 40 : 60;
-
-            for (let z = 0; z < ROWS; z++) {
-                for (let x = 0; x < COLS; x++) {
-                    landscapePoints.push({
-                        x: (x - COLS / 2) * SPACING,
-                        z: z * SPACING,
-                        origZ: z * SPACING,
-                        spacing: SPACING,
-                        rows: ROWS,
-                        cols: COLS
-                    });
-                }
-            }
-        }
-
-        function drawArchitect(globalOpacity = 1, morphFactor = 0) {
-            if (landscapePoints.length === 0) initLandscape();
-            ctx.globalAlpha = globalOpacity;
-
-            const centerX = width / 2;
-            const centerY = height / 2;
-            const tiltX = (mouseY - centerY) * 0.0005;
-            const rotateY = (mouseX - centerX) * 0.0005;
-
-            flightSpeed += 0.05;
-
-            // Warna Dot: Merah Pudar
-            ctx.fillStyle = `rgba(235, 77, 75, 1)`;
-
-            for (let i = 0; i < landscapePoints.length; i++) {
-                let p = landscapePoints[i];
-
-                // Gerakkan Z mendekat ke kamera
-                let moveZ = p.origZ - (flightSpeed * 50);
-                // Loop Z agar tidak habis
-                const totalDepth = p.rows * p.spacing;
-                const modZ = ((moveZ % totalDepth) + totalDepth) % totalDepth;
-
-                // Wave Y Calculation
-                const waveY = Math.sin((p.x * 0.01) + (flightSpeed * 0.5)) * (80 * scaleFactor) +
-                    Math.sin((modZ * 0.02) + (flightSpeed * 0.3)) * (80 * scaleFactor);
-
-                // Koordinat 3D Awal
-                let px = p.x;
-                let py = waveY + (200 * scaleFactor);
-                let pz = modZ - 1000; // Offset kamera mundur
-
-                // Morph ke Bola (saat transisi ke Skills)
-                if (morphFactor > 0) {
-                    const radius = 300 * scaleFactor;
-                    const theta = (p.x * 0.005);
-                    const phi = (modZ * 0.005);
-                    const sphereX = radius * Math.cos(theta) * Math.sin(phi);
-                    const sphereY = radius * Math.cos(phi);
-                    const sphereZ = radius * Math.sin(theta) * Math.sin(phi) + 500;
-
-                    px = px * (1 - morphFactor) + sphereX * morphFactor;
-                    py = py * (1 - morphFactor) + sphereY * morphFactor;
-                    pz = pz * (1 - morphFactor) + sphereZ * morphFactor;
-                }
-
-                // Rotasi Kamera (3D Rotation matrix sederhana)
-                let y2 = py * Math.cos(tiltX) - pz * Math.sin(tiltX);
-                let z2 = py * Math.sin(tiltX) + pz * Math.cos(tiltX);
-                let x3 = px * Math.cos(rotateY) - z2 * Math.sin(rotateY);
-                let z3 = px * Math.sin(rotateY) + z2 * Math.cos(rotateY);
-
-                // Proyeksi ke Layar 2D
-                const focalLength = 400 * scaleFactor;
-                if (z3 < 10) z3 = 10; // Cegah glitch
-
-                const scale = focalLength / z3;
-                const screenX = centerX + x3 * scale;
-                const screenY = centerY + y2 * scale;
-
-                // Fogging (Semakin jauh semakin transparan)
-                const fog = Math.min(1, (scale * 2));
-
-                if (scale > 0 && screenX > 0 && screenX < width && screenY > 0 && screenY < height) {
-                    ctx.globalAlpha = fog * globalOpacity;
-                    const dotSize = Math.max(0.8, 2.5 * scale);
-                    ctx.beginPath();
-                    ctx.arc(screenX, screenY, dotSize, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-            ctx.globalAlpha = 1;
-        }
-
-        // =========================================================================
-        // --- 3. SKILLS: THE QUANTUM ORBIT ---
-        // =========================================================================
-        let orbitParticles = [];
-
-        function initOrbit() {
-            orbitParticles = [];
-            const count = isMobile ? 50 : 100; // Kurangi partikel di HP
-            for (let i = 0; i < count; i++) {
-                orbitParticles.push({
-                    radius: (100 + Math.random() * 200) * scaleFactor,
-                    angle: Math.random() * Math.PI * 2,
-                    speed: (Math.random() - 0.5) * 0.05,
-                    zOffsetMult: Math.random() * 50
+            for (let i = 0; i < numParticles; i++) {
+                particles.push({
+                    x: (Math.random() - 0.5) * window.innerWidth,
+                    y: (Math.random() - 0.5) * window.innerHeight,
+                    z: (Math.random() - 0.5) * 1000,
+                    tx: 0, ty: 0, tz: 0,
+                    offset: Math.random() * Math.PI * 2,
+                    speed: Math.random() * 0.05 + 0.01
                 });
             }
         }
 
-        function drawSkillsOrbit(globalOpacity = 1) {
-            if (orbitParticles.length === 0) initOrbit();
-            ctx.globalAlpha = globalOpacity;
+        // --- RESIZE HANDLER ---
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            isMobile = width < 768;
 
-            const centerX = width / 2;
-            const centerY = height / 2;
-            const rotX = (mouseY - centerY) * 0.002;
-            const rotY = (mouseX - centerX) * 0.002;
+            // UPDATE: Base scale factor sedikit diperbesar
+            scaleFactor = Math.min(width, height) / 800;
 
-            // Inti Atom
-            const coreSize = 60 * scaleFactor;
-            const coreGrad = ctx.createRadialGradient(centerX, centerY, coreSize * 0.1, centerX, centerY, coreSize);
-            coreGrad.addColorStop(0, '#fff');
-            coreGrad.addColorStop(0.5, '#eb4d4b');
-            coreGrad.addColorStop(1, 'transparent');
-            ctx.fillStyle = coreGrad;
-            ctx.beginPath(); ctx.arc(centerX, centerY, coreSize, 0, Math.PI * 2); ctx.fill();
+            initParticles();
+        }
+        window.addEventListener('resize', resize);
+        resize();
 
-            // Elektron
-            orbitParticles.forEach(p => {
-                p.angle += p.speed;
-                let px = Math.cos(p.angle) * p.radius;
-                let py = Math.sin(p.angle) * p.radius;
-                // Orbit Z wave
-                let pz = Math.sin(p.angle * 3) * (p.zOffsetMult * scaleFactor);
+        // --- SCROLLBAR LOGIC ---
+        let scrollPercent = 0;
+        function updateCustomScroll() {
+            const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+            scrollPercent = window.scrollY / totalHeight;
+            if (totalHeight <= 0) scrollPercent = 0;
 
-                // Rotasi Global
-                let y2 = py * Math.cos(rotX) - pz * Math.sin(rotX);
-                let z2 = py * Math.sin(rotX) + pz * Math.cos(rotX);
-                let x3 = px * Math.cos(rotY) - z2 * Math.sin(rotY);
-                let z3 = px * Math.sin(rotY) + z2 * Math.cos(rotY);
+            const trackHeight = window.innerHeight - 100;
+            const thumbPosition = scrollPercent * trackHeight;
+            if (customThumb) customThumb.style.transform = `translateY(${thumbPosition}px)`;
+            if (scrollFloat) {
+                scrollFloat.style.transform = `translateY(${thumbPosition + 40}px)`;
+                scrollFloat.innerText = `${Math.min(100, Math.max(0, Math.round(scrollPercent * 100)))}%`;
+            }
+        }
+        window.addEventListener('scroll', updateCustomScroll);
 
-                const focalLength = 300 * scaleFactor;
-                const zDepth = z3 + 400;
-                const scale = focalLength / zDepth;
+        // --- MOUSE TRACKING ---
+        window.addEventListener('mousemove', (e) => {
+            targetMx = (e.clientX / width) * 2 - 1;
+            targetMy = (e.clientY / height) * 2 - 1;
 
-                const sx = centerX + x3 * scale;
-                const sy = centerY + y2 * scale;
+            const dot = document.querySelector('.cursor-dot');
+            const circle = document.querySelector('.cursor-circle');
+            if (dot && circle) {
+                dot.style.cssText = `top:${e.clientY}px; left:${e.clientX}px`;
+                circle.animate({ top: `${e.clientY}px`, left: `${e.clientX}px` }, { duration: 500, fill: "forwards" });
+            }
+        });
 
-                const alpha = Math.min(1, scale);
-                ctx.fillStyle = `rgba(255, 255, 255, ${alpha * globalOpacity})`;
-                const size = Math.max(1, 3 * scale);
-                ctx.beginPath(); ctx.arc(sx, sy, size, 0, Math.PI * 2); ctx.fill();
-            });
-            ctx.globalAlpha = 1;
+        // --- 3D FORMULAS (UPSCALED) ---
+        function getTargetPosition(i, type, time) {
+            const p = particles[i];
+            const ratio = i / numParticles;
+            let x, y, z;
+
+            if (type === 'sphere') {
+                // HERO: BOLA (Diperbesar Radiusnya)
+                // Radius: 250 -> 350
+                const r = 350 * scaleFactor;
+                const theta = ratio * Math.PI * 2 * 20;
+                const phi = Math.acos(2 * ratio - 1);
+                x = r * Math.sin(phi) * Math.cos(theta + time * 0.1);
+                y = r * Math.sin(phi) * Math.sin(theta + time * 0.1);
+                z = r * Math.cos(phi);
+            }
+            else if (type === 'terrain') {
+                // ARCHITECT: LANTAI (Lebih Lebar & Gelombang lebih tinggi)
+                const size = width * 2.5; // Lebar x2.5 layar
+                const gridX = (i % 20) / 20 * size - size / 2;
+                const gridZ = Math.floor(i / 20) / (numParticles / 20) * size - size / 2;
+                x = gridX;
+                // Amplitude: 50 -> 90
+                y = Math.sin((gridX + time * 100) * 0.01) * 90 + (250 * scaleFactor);
+                z = gridZ + (time * 100 % 1000) - 500;
+                if (z > 500) z -= 2000;
+            }
+            else if (type === 'helix') {
+                // SKILLS: DNA HELIX (Lebih Gemuk & Tinggi)
+                const r = 320 * scaleFactor; // Radius: 200 -> 320
+                const h = 1100 * scaleFactor; // Tinggi helix
+                const theta = ratio * Math.PI * 2 * 5 + time;
+                x = r * Math.cos(theta);
+                y = (ratio - 0.5) * h * 1.5;
+                z = r * Math.sin(theta);
+                if (i % 2 === 0) x *= -1;
+            }
+            else if (type === 'network') {
+                // PROJECTS: NETWORK (Spread lebih luas)
+                const spread = 1200 * scaleFactor; // Spread: 800 -> 1200
+                x = Math.cos(p.offset) * spread + Math.sin(time * 0.2) * 100;
+                y = Math.sin(p.offset * 2) * spread * 0.6;
+                z = Math.sin(p.offset * 3) * spread;
+            }
+            else if (type === 'warp') {
+                // FOOTER: WARP
+                const spread = 2500 * scaleFactor;
+                x = (Math.random() - 0.5) * spread * 2;
+                y = (Math.random() - 0.5) * spread * 2;
+                z = 1000;
+            }
+
+            return { x, y, z };
         }
 
+        // --- MAIN RENDER LOOP ---
+        let time = 0;
 
-        // --- 4. PROJECTS & FOOTER ---
-        const nodes = [];
-        function initNodes() {
-            nodes.length = 0;
-            const count = isMobile ? 30 : 60;
-            for (let i = 0; i < count; i++) nodes.push({ x: Math.random() * width, y: Math.random() * height, vx: (Math.random() - 0.5), vy: (Math.random() - 0.5) });
-        }
-        function drawProjects() {
-            if (nodes.length === 0) initNodes(); ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-            nodes.forEach(node => {
-                node.x += node.vx; node.y += node.vy; if (node.x < 0 || node.x > width) node.vx *= -1; if (node.y < 0 || node.y > height) node.vy *= -1;
-                const dx = mouseX - node.x; const dy = mouseY - node.y; if (Math.sqrt(dx * dx + dy * dy) < 200) { node.x += dx * 0.01; node.y += dy * 0.01; }
-                ctx.beginPath(); ctx.arc(node.x, node.y, 2, 0, Math.PI * 2); ctx.fill();
-                nodes.forEach(other => { if (Math.hypot(node.x - other.x, node.y - other.y) < 100) { ctx.beginPath(); ctx.moveTo(node.x, node.y); ctx.lineTo(other.x, other.y); ctx.stroke(); } });
-            });
-        }
-        const stars = [];
-        function initWarp() { stars.length = 0; for (let i = 0; i < (isMobile ? 100 : 200); i++) stars.push({ x: Math.random() * width - width / 2, y: Math.random() * height - height / 2, z: Math.random() * width }); }
-        function drawFooter() {
-            if (stars.length === 0) initWarp(); ctx.fillStyle = '#fff'; const cx = width / 2; const cy = height / 2;
-            stars.forEach(star => {
-                star.z -= 10; if (star.z <= 0) { star.z = width; star.x = Math.random() * width - width / 2; star.y = Math.random() * height - height / 2; }
-                const sx = (star.x / star.z) * width + cx; const sy = (star.y / star.z) * height + cy; const size = (1 - star.z / width) * 3;
-                if (sx > 0 && sx < width && sy > 0 && sy < height) { ctx.beginPath(); ctx.arc(sx, sy, size, 0, Math.PI * 2); ctx.fill(); }
-            });
-        }
+        function animate() {
+            ctx.fillStyle = '#050505';
+            ctx.fillRect(0, 0, width, height);
 
-        // =========================================
-        // --- MAIN ANIMATION LOOP ---
-        // =========================================
-        function animateCanvas() {
-            ctx.clearRect(0, 0, width, height);
+            time += 0.02;
 
-            if (isTransitioning) {
-                transitionProgress += 0.02;
-                if (transitionProgress >= 1) {
-                    transitionProgress = 0;
-                    currentSection = targetSection;
-                    isTransitioning = false;
-                    if (currentSection === 'projects') initNodes();
-                    if (currentSection === 'footer') initWarp();
+            mx += (targetMx - mx) * 0.05;
+            my += (targetMy - my) * 0.05;
+
+            let stage = scrollPercent * 4;
+            let index = Math.floor(stage);
+            let progress = stage - index;
+
+            if (index < 0) index = 0;
+            if (index > 3) { index = 3; progress = 1; }
+
+            const scenes = ['sphere', 'terrain', 'helix', 'network', 'warp'];
+            const currentScene = scenes[index];
+            const nextScene = scenes[index + 1] || 'warp';
+
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = 'rgba(235, 77, 75, 0.3)';
+
+            for (let i = 0; i < numParticles; i++) {
+                let p = particles[i];
+
+                let pos1 = getTargetPosition(i, currentScene, time);
+                let pos2 = getTargetPosition(i, nextScene, time);
+
+                if (nextScene === 'warp' && progress > 0.5) {
+                    p.z -= 25; // Speed up warp
+                    if (p.z < -500) p.z = 1000;
+                    pos2.x = p.x; pos2.y = p.y; pos2.z = p.z;
+                }
+
+                const ease = progress * progress * (3 - 2 * progress);
+
+                p.tx = pos1.x + (pos2.x - pos1.x) * ease;
+                p.ty = pos1.y + (pos2.y - pos1.y) * ease;
+                p.tz = pos1.z + (pos2.z - pos1.z) * ease;
+
+                p.x += (p.tx - p.x) * 0.1;
+                p.y += (p.ty - p.y) * 0.1;
+                p.z += (p.tz - p.z) * 0.1;
+
+                let rx = p.x * Math.cos(mx) - p.z * Math.sin(mx);
+                let rz = p.x * Math.sin(mx) + p.z * Math.cos(mx);
+                let ry = p.y * Math.cos(my) - rz * Math.sin(my);
+                rz = p.y * Math.sin(my) + rz * Math.cos(my);
+
+                // --- UPDATE: ZOOM IN ---
+                const fov = 400 * scaleFactor;
+                // Offset kamera dikurangi dari 600 ke 350 agar objek terlihat LEBIH BESAR (Lebih dekat)
+                const scale = fov / (fov + rz + 350);
+
+                const screenX = width / 2 + rx * scale;
+                const screenY = height / 2 + ry * scale;
+
+                p.sx = screenX; p.sy = screenY; p.scale = scale;
+
+                if (scale > 0) {
+                    const alpha = Math.min(1, scale * 1.5 - (scrollPercent > 0.8 && rz < 0 ? 1 : 0));
+                    ctx.globalAlpha = alpha;
+
+                    const isRedSection = (index === 2 || index === 3);
+                    ctx.fillStyle = isRedSection ? `rgba(235, 77, 75, ${alpha})` : `rgba(255, 255, 255, ${alpha})`;
+
+                    // --- UPDATE: PARTICLE SIZE ---
+                    // Partikel dibuat lebih besar (scale * 5)
+                    const size = Math.max(0.8, scale * 5);
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, size, 0, Math.PI * 2);
+                    ctx.fill();
                 }
             }
 
-            // --- TRANSITION LOGIC ---
+            if ((currentScene === 'network' || nextScene === 'network') && typeof scaleFactor !== 'undefined' && scaleFactor > 0.5) {
+                ctx.lineWidth = 0.8; // Garis lebih tebal sedikit
+                ctx.strokeStyle = `rgba(255, 255, 255, ${0.15})`;
 
-            // 1. Hero -> Architect (FADE ONLY, NO ZOOM)
-            if (isTransitioning && currentSection === 'hero' && targetSection === 'architect') {
-                const fadeOut = 1 - transitionProgress;
-                // Scale tetap 1, Opacity menurun
-                drawHero(fadeOut);
-                // Landscape fade in
-                drawArchitect(transitionProgress, 0);
+                for (let i = 0; i < numParticles; i += 2) {
+                    for (let j = i + 1; j < i + 10; j++) {
+                        if (j >= numParticles) break;
+                        const p1 = particles[i];
+                        const p2 = particles[j];
+
+                        const dx = p1.sx - p2.sx;
+                        const dy = p1.sy - p2.sy;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        // Jarak koneksi diperbesar agar jaring lebih rapat
+                        if (dist < 130 * scaleFactor && p1.scale > 0 && p2.scale > 0) {
+                            ctx.beginPath();
+                            ctx.moveTo(p1.sx, p1.sy);
+                            ctx.lineTo(p2.sx, p2.sy);
+                            ctx.stroke();
+                        }
+                    }
+                }
             }
 
-            // 2. Architect -> Skills (Morph Sphere)
-            else if (isTransitioning && currentSection === 'architect' && targetSection === 'skills') {
-                const fadeOut = 1 - transitionProgress;
-                drawArchitect(fadeOut, transitionProgress);
-                drawSkillsOrbit(transitionProgress);
-            }
-
-            // 3. Skills -> Projects
-            else if (isTransitioning && currentSection === 'skills' && targetSection === 'projects') {
-                drawSkillsOrbit(1 - transitionProgress);
-                ctx.globalAlpha = transitionProgress;
-                drawProjects(); ctx.globalAlpha = 1;
-            }
-
-            // Standard Fade
-            else if (isTransitioning) {
-                ctx.globalAlpha = 1 - transitionProgress;
-                if (currentSection === 'projects') drawProjects();
-                ctx.globalAlpha = 1;
-            }
-
-            // STATIC
-            else {
-                if (currentSection === 'hero') drawHero();
-                else if (currentSection === 'architect') drawArchitect();
-                else if (currentSection === 'skills') drawSkillsOrbit();
-                else if (currentSection === 'projects') drawProjects();
-                else if (currentSection === 'footer') drawFooter();
-            }
-
-            requestAnimationFrame(animateCanvas);
+            ctx.globalAlpha = 1;
+            requestAnimationFrame(animate);
         }
 
-        // Init Logic
-        resize();
-        animateCanvas();
-        if (!isMobile) {
-            window.addEventListener('mousemove', (e) => {
-                mouseX = e.clientX; mouseY = e.clientY;
-                const dot = document.querySelector('.cursor-dot'); const circle = document.querySelector('.cursor-circle');
-                if (dot && circle) { dot.style.cssText = `top:${mouseY}px; left:${mouseX}px`; circle.animate({ top: `${mouseY}px`, left: `${mouseX}px` }, { duration: 500, fill: "forwards" }); }
-            });
-            document.querySelectorAll('.hover-target').forEach(el => { el.addEventListener('mouseenter', () => document.body.classList.add('hovering')); el.addEventListener('mouseleave', () => document.body.classList.remove('hovering')); });
-        }
+        animate();
 
-        // --- OTHER UTILS (TEXT, MODAL) ---
-        function initBioTextSplit() {
-            const bioContainer = document.getElementById('interactive-bio'); if (!bioContainer) return;
-            bioContainer.innerHTML = `<p>${wrapChars("I don't just write code; I build ")}<strong>${wrapChars("systems that breathe")}</strong>.${wrapChars(".")} <br><br>${wrapChars("My philosophy is simple: complexity should be handled by the machine, not the user.")}<br><br>${wrapChars("Currently obsessed with ")}<strong>${wrapChars("Micro-interactions")}</strong>${wrapChars(" and ")}<strong>${wrapChars("System Scalability")}</strong>${wrapChars(".")}</p>`;
-            document.querySelectorAll('.hacker-char').forEach(char => { char.addEventListener('mouseenter', () => hackerScramble(char)); });
+        // --- UTILS ---
+        function openModal(el, event) {
+            event.preventDefault();
+            document.getElementById('m-title').innerText = el.getAttribute('data-title');
+            document.getElementById('m-desc').innerText = el.getAttribute('data-desc');
+            document.getElementById('m-stack').innerText = el.getAttribute('data-stack');
+            document.getElementById('m-img').src = el.getAttribute('data-img');
+            document.getElementById('m-link').href = el.getAttribute('data-link');
+            modal.classList.add('modal-active');
+            document.body.style.overflow = 'hidden';
+            isModalOpen = true;
         }
-        function wrapChars(str) { return str.split('').map(c => `<span class="hacker-char" data-char="${c}">${c}</span>`).join(''); }
-        function hackerScramble(el) {
-            const original = el.getAttribute('data-char'); const chars = "0123456789"; let count = 0; if (el.dataset.scrambling) return;
-            el.dataset.scrambling = true; const interval = setInterval(() => {
-                el.innerText = chars[Math.floor(Math.random() * chars.length)]; count++;
-                if (count > 3) { clearInterval(interval); el.innerText = original; delete el.dataset.scrambling; }
-            }, 50);
+        function closeModal() {
+            modal.classList.remove('modal-active');
+            document.body.style.overflowY = 'auto';
+            isModalOpen = false;
         }
-        try { initBioTextSplit(); } catch (e) { }
 
         function triggerScramble(element) {
-            const targets = element.querySelectorAll('.scramble-wrapper'); const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&";
+            const targets = element.querySelectorAll('.scramble-wrapper');
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&";
             targets.forEach((target) => {
-                const originalText = target.getAttribute('data-value'); target.innerText = originalText; let iterations = 0;
+                const originalText = target.getAttribute('data-value');
+                target.innerText = originalText;
+                let iterations = 0;
                 const interval = setInterval(() => {
                     target.innerText = originalText.split("").map((letter, index) => {
-                        if (index < iterations) return originalText[index]; return chars[Math.floor(Math.random() * chars.length)]
+                        if (index < iterations) return originalText[index];
+                        return chars[Math.floor(Math.random() * chars.length)]
                     }).join("");
-                    if (iterations >= originalText.length) { clearInterval(interval); target.innerText = originalText; } iterations += 1 / 3;
+                    if (iterations >= originalText.length) { clearInterval(interval); target.innerText = originalText; }
+                    iterations += 1 / 3;
                 }, 30);
             });
         }
@@ -1518,19 +1357,24 @@
                                     entries.forEach(entry => {
                                         if (entry.isIntersecting) {
                                             entry.target.classList.add('in-view');
-                                            if (entry.target.querySelector('.count-up')) animateStats(entry.target); observer.unobserve(entry.target);
+                                            if (entry.target.querySelector('.count-up')) animateStats(entry.target);
+                                            observer.unobserve(entry.target);
                                         }
                                     });
                                 }, { threshold: 0.1 });
                                 document.querySelectorAll('.reveal-up').forEach(el => observer.observe(el));
-                                const h1 = document.querySelector('h1'); if (h1) triggerScramble(h1); updateCustomScroll();
+                                const h1 = document.querySelector('h1'); if (h1) triggerScramble(h1);
+                                updateCustomScroll();
                             }
                         });
                     }
                 }).add({ targets: '.intro-counter', innerHTML: [0, 100], round: 1, duration: 2500, easing: 'easeInOutQuad' })
                     .add({ targets: '.intro-line', width: '200px', duration: 1000 }, '-=1500')
                     .add({ targets: '.intro-text', opacity: [0, 1], duration: 800 }, '-=1500');
-            } else { document.getElementById('intro-overlay').style.display = 'none'; document.body.style.overflowY = 'auto'; }
+            } else {
+                document.getElementById('intro-overlay').style.display = 'none';
+                document.body.style.overflowY = 'auto';
+            }
         });
 
         function animateStats(el) {
@@ -1541,9 +1385,6 @@
                 else counter.innerHTML = target;
             });
         }
-
-        function openModal(el, event) { event.preventDefault(); document.getElementById('m-title').innerText = el.getAttribute('data-title'); document.getElementById('m-desc').innerText = el.getAttribute('data-desc'); document.getElementById('m-stack').innerText = el.getAttribute('data-stack'); document.getElementById('m-img').src = el.getAttribute('data-img'); document.getElementById('m-link').href = el.getAttribute('data-link'); modal.classList.add('modal-active'); document.body.style.overflow = 'hidden'; isModalOpen = true; }
-        function closeModal() { modal.classList.remove('modal-active'); document.body.style.overflowY = 'auto'; isModalOpen = false; }
     </script>
 </body>
 
