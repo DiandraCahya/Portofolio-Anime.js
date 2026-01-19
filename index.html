@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIANDRA | Full Stack Engineer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;400;600&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="is-scrolling">
+
+    <div id="intro-overlay">
+        <div class="intro-content">
+            <div class="intro-counter">000</div>
+            <div class="intro-line"></div>
+            <div class="intro-text">SYSTEM INITIALIZATION</div>
+        </div>
+    </div>
+
+    <canvas id="dynamic-bg"></canvas>
+
+    <div class="noise"></div>
+    <div class="cursor-dot"></div>
+    <div class="cursor-circle"></div>
+
+    <div class="custom-scrollbar-container">
+        <div class="custom-scrollbar-track">
+            <div class="custom-scrollbar-thumb" id="custom-thumb"></div>
+        </div>
+        <div class="scroll-percent-float" id="scroll-float">0%</div>
+    </div>
+
+    <div class="modal-overlay" id="modal">
+        <div class="modal-header">
+            <div>DIANDRA_PROJECT_VIEW</div>
+            <div class="close-btn hover-target" onclick="closeModal()">CLOSE</div>
+        </div>
+        <div class="modal-body">
+            <div class="modal-img-container">
+                <img id="m-img" class="modal-img" src="" alt="">
+            </div>
+            <div class="modal-info">
+                <h2 id="m-title" class="modal-title">TITLE</h2>
+                <div id="m-stack" style="margin-bottom: 20px; font-family: monospace; color: var(--accent);">STACK</div>
+                <p id="m-desc" class="modal-desc">Description</p>
+                <a id="m-link" href="#" class="modal-btn hover-target">LAUNCH SITE</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="scroll-content" id="main-content">
+
+        <section id="section-hero" style="min-height: 100vh;">
+            <span class="label reveal-up">/// Full Stack Engineer</span>
+            <h1 class="reveal-up" onclick="triggerScramble(this)">
+                <div class="scramble-wrapper" data-value="Diandra">Diandra</div>
+                <span>
+                    <div class="scramble-wrapper" data-value="Cahya">Cahya</div>
+                </span>
+            </h1>
+            <p class="lead reveal-up">
+                Crafting scalable digital ecosystems. Specializing in high-performance backend architecture and
+                immersive frontend experiences.
+            </p>
+        </section>
+
+        <section id="section-architect" class="reveal-up" style="position: relative;">
+            <div class="blueprint-grid"></div>
+            <div class="architect-mouse-spotlight"></div>
+            <div class="section-scanner"></div>
+
+            <span class="label">/// The_Architect</span>
+            <div class="about-grid">
+                <div class="about-bio" id="interactive-bio">
+                    <p class="raw-text">I don't just write code; I build <strong>systems that
+                            breathe</strong>.<br><br>My philosophy is simple: complexity should be handled by the
+                        machine, not the user. I bridge the gap between heavy backend logic and fluid frontend
+                        interactions.<br><br>Currently obsessed with <strong>Micro-interactions</strong> and
+                        <strong>System Scalability</strong>.
+                    </p>
+                </div>
+                <div class="about-stats">
+                    <div class="stat-row">
+                        <span class="stat-val"><span class="count-up" data-target="03">0</span>+</span>
+                        <span class="stat-key">Years Experience</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-val"><span class="count-up" data-target="4">0</span>+</span>
+                        <span class="stat-key">Projects Deployed</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-val"><span class="count-up" data-target="100">0</span>%</span>
+                        <span class="stat-key">Commitment</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-skills">
+            <span class="label reveal-up">/// Core_Competencies</span>
+            <div class="marquee-wrapper reveal-up">
+                <div class="marquee-row">
+                    <div class="marquee-track">
+                        <div class="marquee-item hover-target">REACT</div>
+                        <div class="marquee-item hover-target"><span>///</span>LIVEWIRE</div>
+                        <div class="marquee-item hover-target"><span>///</span>ANIME.JS</div>
+                        <div class="marquee-item hover-target"><span>///</span>TAILWIND</div>
+                        <div class="marquee-item hover-target"><span>///</span>THREE.JS</div>
+                        <div class="marquee-item hover-target">REACT</div>
+                        <div class="marquee-item hover-target"><span>///</span>LIVEWIRE</div>
+                        <div class="marquee-item hover-target"><span>///</span>ANIME.JS</div>
+                        <div class="marquee-item hover-target"><span>///</span>TAILWIND</div>
+                        <div class="marquee-item hover-target"><span>///</span>THREE.JS</div>
+                    </div>
+                </div>
+                <div class="marquee-row reverse">
+                    <div class="marquee-track">
+                        <div class="marquee-item hover-target">NODE.JS</div>
+                        <div class="marquee-item hover-target"><span>///</span>LARAVEL</div>
+                        <div class="marquee-item hover-target"><span>///</span>MYSQL</div>
+                        <div class="marquee-item hover-target"><span>///</span>EXPRESS</div>
+                        <div class="marquee-item hover-target"><span>///</span>PHP</div>
+                        <div class="marquee-item hover-target">NODE.JS</div>
+                        <div class="marquee-item hover-target"><span>///</span>LARAVEL</div>
+                        <div class="marquee-item hover-target"><span>///</span>MYSQL</div>
+                        <div class="marquee-item hover-target"><span>///</span>EXPRESS</div>
+                        <div class="marquee-item hover-target"><span>///</span>PHP</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-projects">
+            <span class="label reveal-up">/// Selected_Works</span>
+            <div class="project-list">
+                <a class="project-item hover-target reveal-up" href="#" onclick="openModal(this, event)"
+                    data-title="Gatot AC Mobil"
+                    data-desc="A car air conditioning service booking website equipped with a real-time system and live chat feature."
+                    data-stack="Laravel / Livewire / MySQL" data-img="https://gatotac.web.id/img/hero.png"
+                    data-link="https://gatotac.web.id/">
+                    <div><span class="p-num">01</span><span class="p-title">Booking Service</span></div><span
+                        class="p-cat">Realtime / Backend</span>
+                </a>
+                <a class="project-item hover-target reveal-up" href="#" onclick="openModal(this, event)"
+                    data-title="AWA"
+                    data-desc="An interactive and dynamic company profile website designed to showcase the company’s identity."
+                    data-stack="Express / React" data-img="https://awa.my.id/AWA_NEWLOGO_DROPSHADOW.png"
+                    data-link="https://awa.my.id/">
+                    <div><span class="p-num">02</span><span class="p-title">AWA</span></div><span
+                        class="p-cat">Interaction / Frontend</span>
+                </a>
+                <a class="project-item hover-target reveal-up" href="#" onclick="openModal(this, event)"
+                    data-title="Find Utopia"
+                    data-desc="A website with a cool and dynamic design inspired by a file manager interface."
+                    data-stack="Express / React" data-img="https://findutopia.my.id/LOGOWITHSPARKS.png"
+                    data-link="https://findutopia.my.id/">
+                    <div><span class="p-num">03</span><span class="p-title">Find Utopia</span></div><span
+                        class="p-cat">Design System / Dynamic</span>
+                </a>
+            </div>
+        </section>
+
+        <section id="section-footer" style="min-height: 50vh;">
+            <span class="label reveal-up">/// Connect</span>
+            <h1 class="reveal-up footer-title">
+                Let's Build <br> Something Great
+            </h1>
+            <div class="social-row reveal-up">
+                <a href="https://github.com/DiandraCahya" target="_blank" class="social-link magnetic-btn">Github</a>
+                <a href="https://linkedin.com" target="_blank" class="social-link magnetic-btn">LinkedIn</a>
+                <a href="https://instagram.com" target="_blank" class="social-link magnetic-btn">Instagram</a>
+                <a href="mailto:hello@diandra.dev" class="social-link magnetic-btn">Email</a>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
